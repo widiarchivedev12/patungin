@@ -1,12 +1,19 @@
 <x-app-layout>
     <x-slot name="title">Edit Pengeluaran</x-slot>
     <x-slot name="header">
-        <h2 class="font-semibold text-xl text-gray-800 dark:text-gray-200 leading-tight">Edit Pengeluaran</h2>
+        <div class="flex items-center gap-3">
+            <a href="{{ route('groups.expenses.show', [$group, $expense]) }}" class="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 transition">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/>
+                </svg>
+            </a>
+            <h2 class="font-semibold text-xl text-gray-800 dark:text-gray-200 leading-tight">Edit Pengeluaran</h2>
+        </div>
     </x-slot>
 
     <div class="py-8">
         <div class="max-w-2xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-6">
+            <div class="bg-white dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-800 p-6">
                 <form method="POST" action="{{ route('groups.expenses.update', [$group, $expense]) }}">
                     @csrf @method('PUT')
 
@@ -33,7 +40,8 @@
                         <div class="grid grid-cols-2 gap-4">
                             <div>
                                 <x-input-label for="paid_by_member_id" value="Dibayar oleh" />
-                                <select id="paid_by_member_id" name="paid_by_member_id" class="mt-1 block w-full border-gray-300 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-300 focus:border-indigo-500 focus:ring-indigo-500 rounded-md shadow-sm" required>
+                                <select id="paid_by_member_id" name="paid_by_member_id" required
+                                    class="mt-1 block w-full border-gray-300 dark:border-gray-600 dark:bg-gray-800 dark:text-gray-300 focus:border-emerald-500 dark:focus:border-emerald-500 focus:ring-emerald-500 rounded-lg text-sm">
                                     @foreach($members as $member)
                                         <option value="{{ $member->id }}" {{ old('paid_by_member_id', $expense->paid_by_member_id) == $member->id ? 'selected' : '' }}>
                                             {{ $member->display_name }}
@@ -49,10 +57,12 @@
 
                         <div>
                             <x-input-label value="Cara Bagi" />
-                            <div class="mt-2 grid grid-cols-2 sm:grid-cols-4 gap-2">
+                            <div class="mt-2 grid grid-cols-2 sm:grid-cols-4 gap-2" id="split-selector">
                                 @foreach(['equal' => 'Sama Rata', 'percentage' => 'Persentase', 'exact' => 'Nominal', 'by_item' => 'Per Item'] as $val => $label)
-                                    <label class="flex items-center justify-center gap-2 px-3 py-2 border rounded-lg cursor-pointer text-sm font-medium transition
-                                        {{ old('split_type', $expense->split_type) === $val ? 'bg-indigo-600 text-white border-indigo-600' : 'bg-white dark:bg-gray-700 border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-200 hover:bg-gray-50' }}">
+                                    <label class="flex items-center justify-center px-3 py-2.5 border-2 rounded-lg cursor-pointer text-sm font-medium transition
+                                        {{ old('split_type', $expense->split_type) === $val
+                                            ? 'border-emerald-500 bg-emerald-50 dark:bg-emerald-900/20 text-emerald-700 dark:text-emerald-300'
+                                            : 'border-gray-200 dark:border-gray-700 text-gray-600 dark:text-gray-400 hover:border-gray-300' }}">
                                         <input type="radio" name="split_type" value="{{ $val }}" class="sr-only" {{ old('split_type', $expense->split_type) === $val ? 'checked' : '' }}>
                                         {{ $label }}
                                     </label>
@@ -66,15 +76,18 @@
                             <div class="mt-2 space-y-2">
                                 @foreach($members as $member)
                                     @php $share = $expense->shares->firstWhere('member_id', $member->id); @endphp
-                                    <label class="flex items-center gap-3 p-3 border border-gray-200 dark:border-gray-700 rounded-lg cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-700/50">
-                                        <input type="checkbox" name="member_ids[]" value="{{ $member->id }}" {{ in_array($member->id, $existingMemberIds) ? 'checked' : '' }} class="rounded border-gray-300 text-indigo-600">
-                                        <span class="text-sm font-medium text-gray-900 dark:text-gray-100">{{ $member->display_name }}</span>
-                                        <div class="ml-auto exact-input {{ $expense->split_type !== 'exact' ? 'hidden' : '' }}">
-                                            <input type="number" name="exact_amounts[]" placeholder="0" min="0" value="{{ $share?->amount ?? 0 }}" class="w-28 text-sm border-gray-300 dark:border-gray-700 dark:bg-gray-900 rounded-md" />
+                                    <label class="flex items-center gap-3 p-3 border border-gray-200 dark:border-gray-700 rounded-lg cursor-pointer hover:bg-slate-50 dark:hover:bg-gray-800/50 transition">
+                                        <input type="checkbox" name="member_ids[]" value="{{ $member->id }}" {{ in_array($member->id, $existingMemberIds) ? 'checked' : '' }}
+                                            class="rounded border-gray-300 dark:border-gray-600 text-emerald-600 focus:ring-emerald-500">
+                                        <span class="text-sm font-medium text-gray-900 dark:text-gray-100 flex-1">{{ $member->display_name }}</span>
+                                        <div class="exact-input {{ $expense->split_type !== 'exact' ? 'hidden' : '' }}">
+                                            <input type="number" name="exact_amounts[]" placeholder="0" min="0" value="{{ $share?->amount ?? 0 }}"
+                                                class="w-28 text-sm border-gray-300 dark:border-gray-600 dark:bg-gray-800 rounded-lg" />
                                         </div>
-                                        <div class="ml-auto percentage-input {{ $expense->split_type !== 'percentage' ? 'hidden' : '' }}">
-                                            <input type="number" name="percentages[]" placeholder="0" min="0" max="100" step="0.01" class="w-20 text-sm border-gray-300 dark:border-gray-700 dark:bg-gray-900 rounded-md" />
-                                            <span class="text-sm text-gray-500 ml-1">%</span>
+                                        <div class="percentage-input {{ $expense->split_type !== 'percentage' ? 'hidden' : '' }} flex items-center gap-1">
+                                            <input type="number" name="percentages[]" placeholder="0" min="0" max="100" step="0.01"
+                                                class="w-20 text-sm border-gray-300 dark:border-gray-600 dark:bg-gray-800 rounded-lg" />
+                                            <span class="text-sm text-gray-500">%</span>
                                         </div>
                                     </label>
                                 @endforeach
@@ -82,7 +95,7 @@
                         </div>
 
                         <div class="flex justify-end gap-3 pt-2">
-                            <a href="{{ route('groups.expenses.show', [$group, $expense]) }}" class="inline-flex items-center px-4 py-2 bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg text-sm font-medium text-gray-700 dark:text-gray-200 hover:bg-gray-50 transition">
+                            <a href="{{ route('groups.expenses.show', [$group, $expense]) }}" class="inline-flex items-center px-4 py-2 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-lg text-sm font-medium text-gray-700 dark:text-gray-200 hover:bg-gray-50 transition">
                                 Batal
                             </a>
                             <x-primary-button>Simpan Perubahan</x-primary-button>
@@ -94,14 +107,15 @@
     </div>
 
     <script>
-        document.querySelectorAll('input[name="split_type"]').forEach(radio => {
+        document.querySelectorAll('#split-selector input[type="radio"]').forEach(radio => {
             radio.addEventListener('change', () => {
-                document.querySelectorAll('input[name="split_type"]').forEach(r => {
-                    r.closest('label').className = r.closest('label').className
-                        .replace('bg-indigo-600 text-white border-indigo-600', 'bg-white dark:bg-gray-700 border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-200 hover:bg-gray-50');
+                document.querySelectorAll('#split-selector label').forEach(label => {
+                    label.classList.remove('border-emerald-500', 'bg-emerald-50', 'dark:bg-emerald-900/20', 'text-emerald-700', 'dark:text-emerald-300');
+                    label.classList.add('border-gray-200', 'dark:border-gray-700', 'text-gray-600', 'dark:text-gray-400');
                 });
-                radio.closest('label').className = radio.closest('label').className
-                    .replace('bg-white dark:bg-gray-700 border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-200 hover:bg-gray-50', 'bg-indigo-600 text-white border-indigo-600');
+                const selected = radio.closest('label');
+                selected.classList.add('border-emerald-500', 'bg-emerald-50', 'dark:bg-emerald-900/20', 'text-emerald-700', 'dark:text-emerald-300');
+                selected.classList.remove('border-gray-200', 'dark:border-gray-700', 'text-gray-600', 'dark:text-gray-400');
 
                 const isExact = radio.value === 'exact';
                 const isPct = radio.value === 'percentage';
